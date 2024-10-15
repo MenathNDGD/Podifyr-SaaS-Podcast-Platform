@@ -15,7 +15,10 @@ const geistMono = localFont({
 
 export const metadata: Metadata = {
   title: "Podifyr",
-  description: "SaaS Podcast Platform",
+  description: "AI-powered SaaS Podcast Platform",
+  icons: {
+    icon: "/icons/logo.png",
+  },
 };
 
 export default function RootLayout({

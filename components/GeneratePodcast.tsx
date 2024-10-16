@@ -8,6 +8,7 @@ import { useAction, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { v4 as uuidv4 } from "uuid";
 import { useUploadFiles } from "@xixixao/uploadstuff/react";
+import { useToast } from "@/hooks/use-toast";
 
 const useGeneratePodcast = ({
   setAudio,
@@ -16,6 +17,7 @@ const useGeneratePodcast = ({
   setAudioStorageId,
 }: GeneratePodcastProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
+  const { toast } = useToast();
 
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   const { startUpload } = useUploadFiles(generateUploadUrl);
@@ -29,7 +31,9 @@ const useGeneratePodcast = ({
     setAudio("");
 
     if (!voicePrompt) {
-      // TODO: Show error message
+      toast({
+        title: "Please provide a voiceType to generate a podcast",
+      });
       return setIsGenerating(false);
     }
 
@@ -51,11 +55,15 @@ const useGeneratePodcast = ({
       const audioUrl = await getAudioUrl({ storageId });
       setAudio(audioUrl!);
       setIsGenerating(false);
-
-      // TODO: Show success message
+      toast({
+        title: "Podcast generated successfully",
+      });
     } catch (error) {
       console.log("Error generating podcast", error);
-      // TODO: Show error message
+      toast({
+        title: "Error generating podcast. Please try again.",
+        variant: "destructive",
+      });
       setIsGenerating(false);
     }
   };
@@ -75,7 +83,7 @@ const GeneratePodcast = (props: GeneratePodcastProps) => {
           AI Prompt to Generate Podcast
         </Label>
         <Textarea
-          className="font-light input-class focus-visible:ring-offset-orange-1"
+          className="input-class focus-visible:ring-offset-orange-1"
           placeholder="Enter AI prompt to generate podcast"
           rows={5}
           value={props.voicePrompt}
@@ -86,6 +94,7 @@ const GeneratePodcast = (props: GeneratePodcastProps) => {
         <Button
           type="submit"
           className="py-4 font-bold text-16 bg-orange-1 text-white-1"
+          onClick={generatePodcast}
           disabled={isGenerating}
         >
           {isGenerating ? (

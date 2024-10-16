@@ -4,7 +4,6 @@ import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -30,6 +29,10 @@ import GeneratePodcast from "@/components/GeneratePodcast";
 import GenerateThumbnail from "@/components/GenerateThumbnail";
 import { Loader } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
+import { useToast } from "@/hooks/use-toast";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { useRouter } from "next/navigation";
 
 const voiceCategories = ["alloy", "shimmer", "nova", "echo", "fable", "onyx"];
 
@@ -39,6 +42,8 @@ const formSchema = z.object({
 });
 
 export const CreatePodcast = () => {
+  const router = useRouter();
+
   const [imagePrompt, setImagePrompt] = useState("");
   const [imageStorageId, setImageStorageId] = useState<Id<"_storage"> | null>(
     null
@@ -55,7 +60,10 @@ export const CreatePodcast = () => {
   const [voicePrompt, setVoicePrompt] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // 1. Define your form.
+  const { toast } = useToast();
+
+  const createPodcast = useMutation(api.podcasts.createPodcast);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -64,11 +72,43 @@ export const CreatePodcast = () => {
     },
   });
 
-  // 2. Define a submit handler.
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
-    console.log(values);
+  async function onSubmit(data: z.infer<typeof formSchema>) {
+    try {
+      setIsSubmitting(true);
+
+      if (!audioUrl || !imageUrl || !voiceType) {
+        toast({
+          title: "Please generate audio and image",
+        });
+        setIsSubmitting(false);
+        throw new Error("Please generate audio and image");
+      }
+
+      const podcast = await createPodcast({
+        podcastTitle: data.podcastTitle,
+        podcastDescription: data.podcastDescription,
+        audioUrl,
+        imageUrl,
+        voiceType,
+        imagePrompt,
+        voicePrompt,
+        views: 0,
+        audioDuration,
+        audioStorageId: audioStorageId!,
+        imageStorageId: imageStorageId!,
+      });
+
+      toast({ title: "Podcast created successfully" });
+      setIsSubmitting(false);
+      router.push("/");
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Error submitting podcast",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -113,7 +153,7 @@ export const CreatePodcast = () => {
                 >
                   <SelectValue
                     placeholder="Select Your Favourite AI Voice"
-                    className="placeholder:text-gray-1"
+                    className="placeholder:text-gray-1 focus-visible:ring-offset-orange-1"
                   />
                 </SelectTrigger>
                 <SelectContent className="font-bold border-none text-16 bg-black-1 text-white-1 focus:ring-orange-1">
@@ -160,13 +200,19 @@ export const CreatePodcast = () => {
             <GeneratePodcast
               setAudioStorageId={setAudioStorageId}
               setAudio={setAudioUrl}
-              voiceType={voiceType}
+              voiceType={voiceType!}
               audio={audioUrl}
               voicePrompt={voicePrompt}
               setVoicePrompt={setVoicePrompt}
               setAudioDuration={setAudioDuration}
             />
-            <GenerateThumbnail />
+            <GenerateThumbnail
+              setImage={setImageUrl}
+              setImageStorageId={setImageStorageId}
+              image={imageUrl}
+              imagePrompt={imagePrompt}
+              setImagePrompt={setImagePrompt}
+            />
             <div className="w-full mt-10">
               <Button
                 type="submit"

@@ -20,7 +20,7 @@ export interface TopPodcastersProps {
   name: string;
   podcast: {
     podcastTitle: string;
-    pocastId: Id<"podcasts">;
+    podcastId: Id<"podcasts">;
   }[];
   totalPodcasts: number;
 }
@@ -127,7 +127,6 @@ export interface CarouselProps {
 export interface ProfileCardProps {
   podcastData: ProfilePodcastProps;
   imageUrl: string;
-  userFirstName: string;
 }
 
 export type UseDotButtonType = {

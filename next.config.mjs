@@ -10,6 +10,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "quiet-starling-940.convex.cloud",
       },
+      {
+        protocol: "https",
+        hostname: "img.clerk.com",
+      },
     ],
   },
 };
